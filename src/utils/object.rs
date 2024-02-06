@@ -1,9 +1,10 @@
 use std::collections::{BTreeMap, HashMap};
 
 use rquickjs::{
-    atom::PredefinedAtom, function::Constructor, Array, ArrayBuffer, Ctx, Exception, FromJs,
-    Function, IntoAtom, IntoJs, Object, Result, TypedArray, Value,
+    Array, ArrayBuffer, Ctx, Exception, FromJs, IntoAtom, IntoJs, Object, Result, TypedArray, Value,
 };
+
+use crate::object_cache::{FunctionCacheKey, ObjectCache};
 
 use super::{class::get_class_name, result::ResultExt};
 
@@ -108,7 +109,7 @@ pub fn get_bytes_offset_length<'js>(
 }
 
 pub fn obj_to_array_buffer<'js>(
-    ctx: &Ctx<'js>,
+    _ctx: &Ctx<'js>,
     obj: &Object<'js>,
 ) -> Result<Option<ArrayBuffer<'js>>> {
     //most common
@@ -121,11 +122,11 @@ pub fn obj_to_array_buffer<'js>(
         return Ok(Some(array_buffer));
     }
 
-    let globals = ctx.globals();
-    let data_view: Constructor = globals.get(PredefinedAtom::ArrayBuffer)?;
-    let is_data_view: Function = data_view.get("isView")?;
+    let object_cache_ref = ObjectCache::get();
+    let object_cache = object_cache_ref.as_ref().unwrap();
+    let is_data_view_fn = object_cache.get_function(FunctionCacheKey::ArrayBufferIsView)?;
 
-    if is_data_view.call::<_, bool>((obj.clone(),))? {
+    if is_data_view_fn.call::<_, bool>((obj.clone(),))? {
         let class_name = get_class_name(obj)?.unwrap();
 
         let array_buffer = match class_name.as_str() {

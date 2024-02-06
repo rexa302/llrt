@@ -17,11 +17,8 @@ use rquickjs::{
     Ctx, Function, Object, Result, Type, Value,
 };
 
-use crate::{
-    json::escape::escape_json,
-    number::float_to_string,
-    utils::{class::get_class_name, result::ResultExt},
-};
+use crate::object_cache::{FunctionCacheKey, ObjectCache, PrototypeCacheKey};
+use crate::{json::escape::escape_json, number::float_to_string, utils::class::get_class_name};
 
 pub static AWS_LAMBDA_MODE: AtomicBool = AtomicBool::new(false);
 pub static AWS_LAMBDA_JSON_LOG_FORMAT: AtomicBool = AtomicBool::new(false);
@@ -211,15 +208,11 @@ fn stringify_value<'js>(
         return Ok(());
     }
 
-    //let obj = obj.to_owned();
-    let default_obj = Object::new(ctx.clone())?;
-    let object_ctor: Object = default_obj.get(PredefinedAtom::Constructor)?;
-    let object_prototype = default_obj
-        .get_prototype()
-        .ok_or("Can't get prototype")
-        .or_throw(ctx)?;
-    let get_own_property_desc_fn: Function =
-        object_ctor.get(PredefinedAtom::GetOwnPropertyDescriptor)?;
+    let object_cache_ref = ObjectCache::get();
+    let object_cache = object_cache_ref.as_ref().unwrap();
+    let object_prototype = object_cache.get_prototype(PrototypeCacheKey::Object)?;
+    let get_own_property_desc_fn =
+        object_cache.get_function(FunctionCacheKey::GetOwnPropertyDescriptor)?;
 
     let mut stack = Vec::<StringifyItem>::with_capacity(32);
 

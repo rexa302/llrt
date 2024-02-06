@@ -58,7 +58,7 @@ fn get_random_bytes(ctx: Ctx, length: usize) -> Result<Value> {
     let random_bytes = random_byte_array(length);
 
     let array_buffer = TypedArray::new(ctx.clone(), random_bytes)?;
-    array_buffer.into_js(&ctx)
+    Ok(array_buffer.into_value())
 }
 
 fn random_fill<'js>(ctx: Ctx<'js>, obj: Object<'js>, args: Rest<Value<'js>>) -> Result<()> {

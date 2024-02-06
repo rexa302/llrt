@@ -10,6 +10,7 @@ use rquickjs::{
 use crate::{
     encoding::encoder::Encoder,
     module::export_default,
+    object_cache::{ConstructorCacheKey, ObjectCache},
     utils::{
         object::{get_bytes, get_bytes_offset_length, obj_to_array_buffer},
         result::ResultExt,
@@ -21,8 +22,12 @@ pub struct Buffer(pub Vec<u8>);
 impl<'js> IntoJs<'js> for Buffer {
     fn into_js(self, ctx: &Ctx<'js>) -> Result<Value<'js>> {
         let array_buffer = ArrayBuffer::new(ctx.clone(), self.0)?;
-        let value = array_buffer.into_js(ctx)?;
-        let constructor: Constructor = ctx.globals().get(stringify!(Buffer))?;
+        let value = array_buffer.into_value();
+
+        let object_cache_ref = ObjectCache::get();
+        let object_cache = object_cache_ref.as_ref().unwrap();
+
+        let constructor = object_cache.get_constructor(ConstructorCacheKey::Buffer)?;
         constructor.construct((value,))
     }
 }

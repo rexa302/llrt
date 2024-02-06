@@ -46,7 +46,7 @@ impl<'js> IntoJs<'js> for ReadDir {
                 arr.set(index, name)?;
             }
         }
-        arr.into_js(ctx)
+        Ok(arr.into_value())
     }
 }
 

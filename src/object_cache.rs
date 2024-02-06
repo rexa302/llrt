@@ -29,6 +29,7 @@ pub enum ConstructorCacheKey {
     Date,
     Error,
     RegExp,
+    Buffer,
 }
 
 pub enum PrototypeCacheKey {
@@ -124,22 +125,32 @@ pub fn init(ctx: &Ctx) -> Result<()> {
 
     let object_ctor: Object = globals.get(PredefinedAtom::Object)?;
     let object_proto: Object = object_ctor.get(PredefinedAtom::Prototype)?;
+
     let get_own_property_desc_fn: Object =
         object_ctor.get(PredefinedAtom::GetOwnPropertyDescriptor)?;
+
     let date_ctor: Object = globals.get(PredefinedAtom::Date)?;
     let date_proto: Object = date_ctor.get(PredefinedAtom::Prototype)?;
+
     let map_ctor: Object = globals.get(PredefinedAtom::Map)?;
     let map_proto: Object = map_ctor.get(PredefinedAtom::Prototype)?;
+
     let set_ctor: Object = globals.get(PredefinedAtom::Set)?;
     let set_proto: Object = set_ctor.get(PredefinedAtom::Prototype)?;
+
     let reg_exp_ctor: Object = globals.get(PredefinedAtom::RegExp)?;
     let reg_exp_proto: Object = reg_exp_ctor.get(PredefinedAtom::Prototype)?;
+
     let error_ctor: Object = globals.get(PredefinedAtom::Error)?;
     let error_proto: Object = error_ctor.get(PredefinedAtom::Prototype)?;
+
     let array_ctor: Object = globals.get(PredefinedAtom::Array)?;
     let array_from_fn: Object = array_ctor.get(PredefinedAtom::From)?;
+
     let array_buffer_ctor: Object = globals.get(PredefinedAtom::ArrayBuffer)?;
     let array_buffer_is_view_fn: Object = array_buffer_ctor.get("isView")?;
+
+    let buffer_ctor: Object = globals.get(stringify!(Buffer))?;
 
     let mut values: [JSValue; 256] = [JSValue {
         u: JSValueUnion { int32: 0 },
@@ -152,6 +163,7 @@ pub fn init(ctx: &Ctx) -> Result<()> {
     append_cache(&mut values, ConstructorCacheKey::Error, error_ctor);
     append_cache(&mut values, ConstructorCacheKey::RegExp, reg_exp_ctor);
     append_cache(&mut values, ConstructorCacheKey::Date, date_ctor);
+    append_cache(&mut values, ConstructorCacheKey::Buffer, buffer_ctor);
 
     //functions
     append_cache(&mut values, FunctionCacheKey::ArrayFrom, array_from_fn);
@@ -181,11 +193,6 @@ pub fn init(ctx: &Ctx) -> Result<()> {
         ctx: unsafe { NonNull::new_unchecked(ctx_ptr) },
         cache: values,
     };
-
-    // let cache = ObjectCache {
-    //     ctx: ctx_ptr,
-    //     cache: values,
-    // };
 
     OBJECT_CACHE
         .set(RwLock::new(Some(cache)))

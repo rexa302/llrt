@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 
-use rquickjs::{
-    atom::PredefinedAtom, prelude::Opt, Array, Ctx, FromJs, Function, Object, Result, Symbol, Value,
-};
+use rquickjs::{atom::PredefinedAtom, prelude::Opt, Array, Ctx, FromJs, Result, Symbol, Value};
 
-use crate::utils::{class::IteratorDef, object::array_to_btree_map};
+use crate::{
+    object_cache::{FunctionCacheKey, ObjectCache},
+    utils::{class::IteratorDef, object::array_to_btree_map},
+};
 
 #[derive(Clone, Default)]
 #[rquickjs::class]
@@ -33,10 +34,11 @@ impl URLSearchParams {
                 let iterator = Symbol::iterator(ctx.clone());
 
                 if obj.contains_key(iterator)? {
-                    let array_object: Object = ctx.globals().get(PredefinedAtom::Array)?;
-                    let array_from: Function = array_object.get(PredefinedAtom::From)?;
-                    let value: Value = array_from.call((init,))?;
-                    let array = value.into_array().unwrap();
+                    let object_cache_ref = ObjectCache::get();
+                    let object_cache = object_cache_ref.as_ref().unwrap();
+
+                    let array_from_fn = object_cache.get_function(FunctionCacheKey::ArrayFrom)?;
+                    let array: Array = array_from_fn.call((init,))?;
                     let map = array_to_btree_map(&ctx, array)?;
                     let params = to_params(map);
                     return Ok(Self { params });

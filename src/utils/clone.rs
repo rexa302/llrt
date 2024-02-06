@@ -8,6 +8,8 @@ use rquickjs::{
     Array, Ctx, Function, IntoJs, Null, Object, Result, Type, Value,
 };
 
+use crate::object_cache::{ConstructorCacheKey, FunctionCacheKey, ObjectCache};
+
 use super::object::ObjectExt;
 
 #[derive(Debug)]
@@ -43,16 +45,16 @@ pub fn structured_clone<'js>(
     value: Value<'js>,
     options: Opt<Object<'js>>,
 ) -> Result<Value<'js>> {
-    let globals = ctx.globals();
-    let date_ctor: Constructor = globals.get(PredefinedAtom::Date)?;
-    let map_ctor: Constructor = globals.get(PredefinedAtom::Map)?;
-    let set_ctor: Constructor = globals.get(PredefinedAtom::Set)?;
-    let reg_exp_ctor: Constructor = globals.get(PredefinedAtom::RegExp)?;
-    let error_ctor: Constructor = globals.get(PredefinedAtom::Error)?;
-    let array_ctor: Constructor = globals.get(PredefinedAtom::Array)?;
-    let array_from: Function = array_ctor.get(PredefinedAtom::From)?;
-    let array_buffer: Constructor = globals.get(PredefinedAtom::ArrayBuffer)?;
-    let is_view_fn: Function = array_buffer.get("isView")?;
+    let object_cache_ref = ObjectCache::get();
+    let object_cache = object_cache_ref.as_ref().unwrap();
+
+    let date_ctor = object_cache.get_constructor(ConstructorCacheKey::Date)?;
+    let map_ctor = object_cache.get_constructor(ConstructorCacheKey::Map)?;
+    let set_ctor = object_cache.get_constructor(ConstructorCacheKey::Set)?;
+    let reg_exp_ctor = object_cache.get_constructor(ConstructorCacheKey::RegExp)?;
+    let error_ctor = object_cache.get_constructor(ConstructorCacheKey::Error)?;
+    let array_from_fn = object_cache.get_function(FunctionCacheKey::ArrayFrom)?;
+    let is_view_fn = object_cache.get_function(FunctionCacheKey::ArrayBufferIsView)?;
 
     let mut transfer_set = None;
 
@@ -139,7 +141,7 @@ pub fn structured_clone<'js>(
                         if let Some(collection_type) = is_collection {
                             append_collection(
                                 &mut tape,
-                                &array_from,
+                                &array_from_fn,
                                 object,
                                 parent,
                                 object_key,

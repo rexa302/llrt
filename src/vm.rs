@@ -45,6 +45,7 @@ use crate::{
     module::ModuleModule,
     net::NetModule,
     number::number_to_string,
+    object_cache::{self},
     os::OsModule,
     path::{dirname, join_path, resolve_path, PathModule},
     timers::TimersModule,
@@ -470,6 +471,8 @@ impl Vm {
     pub async fn idle(self) -> StdResult<(), Box<dyn std::error::Error + Sync + Send>> {
         self.runtime.idle().await;
 
+        object_cache::clear();
+
         drop(self.ctx);
         drop(self.runtime);
         Ok(())
@@ -492,6 +495,8 @@ fn run_gc(ctx: Ctx<'_>) {
 
 fn init(ctx: &Ctx<'_>, module_names: HashSet<&'static str>) -> Result<()> {
     let globals = ctx.globals();
+
+    object_cache::init(ctx)?;
 
     globals.set("__gc", Func::from(run_gc))?;
 

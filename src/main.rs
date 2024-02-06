@@ -20,6 +20,7 @@ mod minimal_tracer;
 mod module;
 mod net;
 mod number;
+mod object_cache;
 mod os;
 mod path;
 mod process;

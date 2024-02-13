@@ -43,7 +43,7 @@ To run tests, execute the `llrt test` command. LLRT scans the current directory 
 
 The test runner also has support for filters. Using filters is as simple as adding additional command line arguments, i.e: `llrt test crypto` will only run tests that match the filename containing `crypto`.
 
-## Compatibility matrix
+## Compatibility matrix.
 
 > [!NOTE] 
 > LLRT only support a fraction of the Node.js APIs. It is **NOT** a drop in replacement for Node.js, nor will it ever be. Below is a high level overview of partially supported APIs and modules. For more details consult the [API](API.md) documentation
